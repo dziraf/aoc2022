@@ -20,10 +20,6 @@ const solve = async (sequenceLength) => {
   }) + 1;
 };
 
-const solvePartTwo = async () => {
-
-};
-
 (async () => {
   console.log(`1. ${await solve(4)}`);
   console.log(`2. ${await solve(14)}`);
