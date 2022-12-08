@@ -113,14 +113,6 @@ const getScenicScore = (matrix: Matrix, { value, row, col }: MatrixInput) => {
   const left = countLeft(matrix, { value, row, col });
   const right = countRight(matrix, { value, row, col });
 
-  // console.log({
-  //   value,
-  //   up,
-  //   down,
-  //   left,
-  //   right,
-  //   score: up * down * left * right,
-  // });
   return up * down * left * right;
 };
 
