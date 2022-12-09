@@ -1,8 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-var tailNineCount = 0;
-
 type SolutionInput = [string, number][];
 
 const getInput = async (): Promise<SolutionInput> => {
@@ -16,146 +14,70 @@ const getInput = async (): Promise<SolutionInput> => {
   });
 };
 
-const drawMovements = (movements: string[][], input: SolutionInput, startRow: number, startCol: number, marker?: string) => {
-  let headPos = [startRow, startCol];
-  let tailPos = [startRow, startCol];
-
-  for (let i = 0; i < input.length; i++) {
-    const move = input[i];
-    const [direction, count] = move;
-    let moveCount = 0;
-
-    while (moveCount < count) {
-      const { newHeadPos, newTailPos } = getMove(movements, direction, headPos, tailPos);
-      movements[newTailPos[0]][newTailPos[1]] = marker ?? '#';
-      headPos = newHeadPos;
-      tailPos = newTailPos;
-
-      moveCount++;
-    }
-  }
-
-  return movements;
-}
-
-const hasPositionChanged = (movements: string[][], oldTail: number[], newTail: number[], tailNumber: number) => {
-  const [oldRow, oldCol] = oldTail;
-  const [newRow, newCol] = newTail;
-
-  const currentValue = movements[oldRow][oldCol];
-  const valueAtNewPosition = movements[newRow][newCol];
-  if (tailNumber <= Number(currentValue)) return false;
-  if (valueAtNewPosition !== '.' && tailNumber <= Number(valueAtNewPosition)) return false;
-
-  return oldRow !== newRow || oldCol !== newCol;
-}
-
-const drawMovementsP2 = (movements: string[][], input: SolutionInput, positions: number[][], marker?: string) => {
+const drawMovements = (movements: string[][], input: SolutionInput, positions: number[][]) => {
   for (let i = 0; i < input.length; i++) {
     const [direction, count] = input[i];
     let moveCount = 0;
     while (moveCount < count) {
-      const tmpPositions = [...positions];
-      // console.log(positions);
-      let headIndex = 0;
-      let lastTailMoved = true;
-      do {
-        let tailIndex = headIndex + 1;
-        const head = tmpPositions[headIndex]
-        const tail = tmpPositions[tailIndex];
-        const { newHeadPos, newTailPos } = getMove(movements, direction, head!, tail);
+      let head = positions.slice(0, 1)[0];
+      const tail = positions.slice(1);
+      
+      switch (direction) {
+        case 'D':
+          head[1] -= 1;
+          break;
+        case 'U':
+          head[1] += 1;
+          break;
+        case 'L':
+          head[0] -= 1;
+          break;
+        case 'R':
+          head[0] += 1;
+          break;
+      }
 
-        if (lastTailMoved) {
-          positions[headIndex][0] = newHeadPos[0];
-          positions[headIndex][1] = newHeadPos[1];
+      tail.forEach((tailPos) => {
+        if (!isTailAdjacentToHead(head, tailPos)) {
+          if (head[0] === tailPos[0]) {
+            tailPos[1] += Math.sign(head[1] - tailPos[1]);
+          } else if (head[1] === tailPos[1]) {
+            tailPos[0] += Math.sign(head[0] - tailPos[0]);
+          } else {
+            if (direction === 'U' || direction === 'D') {
+              tailPos[0] += Math.sign(head[0] - tailPos[0]);
+              tailPos[1] += Math.sign(head[1] - tailPos[1]);
+            } else {
+              tailPos[1] += Math.sign(head[1] - tailPos[1]);
+              tailPos[0] += Math.sign(head[0] - tailPos[0]);
+            }
+          }
         }
-
-        const positionChanged = hasPositionChanged(movements, tail, newTailPos, tailIndex);
-        if (positionChanged) {
-          // console.log('tail', tail, newTailPos, tailIndex);
-
-          movements[newTailPos[0]][newTailPos[1]] = tailIndex.toString();
-
-          positions[tailIndex][0] = newTailPos[0];
-          positions[tailIndex][1] = newTailPos[1];
-
-          lastTailMoved = true;
-        } else {
-          lastTailMoved = false;
+    
+        head = tailPos.slice();
+    
+        if (tailPos === positions[positions.length - 1]) {
+          movements[tailPos[0]][tailPos[1]] = '#';
         }
-
-        headIndex++;
-      } while (headIndex < tmpPositions.length - 1 && lastTailMoved)
+      });
 
       moveCount++;
-      // console.log(`Iteration: ${i + 1} | Move: ${moveCount}`);
-      // console.log(drawGrid(movements));
     }
   }
 
   return movements;
 };
 
-const isTailAdjacentToHead = (grid: string[][], headPos: number[], tailPos: number[]) => {
+const isTailAdjacentToHead = (headPos: number[], tailPos: number[]) => {
   const [headRow, headCol] = headPos;
   const [tailRow, tailCol] = tailPos;
 
   if (headRow === tailRow && headCol === tailCol) return true;
 
-  if (headRow < 0 || headRow >= grid.length || headCol < 0 || headCol >= grid[0].length ||
-    tailRow < 0 || tailRow >= grid.length || tailCol < 0 || tailCol >= grid[0].length) {
-    return false;
-  }
-
   const dx = Math.abs(headRow - tailRow);
   const dy = Math.abs(headCol - tailCol);
   
   return (dx <= 1 && dy <= 1 && (dx === 0 || dy === 0 || dx === dy));
-}
-
-const getMove = (movements: string[][], direction: string, headPos: number[], tailPos: number[]) => {
-  const newTailPos = [...tailPos];
-  const newHeadPos = [...headPos];
-  let [row, col] = newTailPos;
-
-  if (direction === 'R') {
-    newHeadPos[1] += 1;
-    if (!isTailAdjacentToHead(movements, newHeadPos, newTailPos)) {
-      col += 1;
-      row = newHeadPos[0];
-    }
-  }
-  if (direction === 'L') {
-    newHeadPos[1] -= 1;
-    if (!isTailAdjacentToHead(movements, newHeadPos, newTailPos)) {
-      col -= 1;
-      row = newHeadPos[0];
-    }
-  }
-  if (direction === 'U') {
-    newHeadPos[0] -= 1;
-    if (!isTailAdjacentToHead(movements, newHeadPos, newTailPos)) {
-      row -= 1;
-      col = newHeadPos[1];
-    }
-  }
-  if (direction === 'D') {
-    newHeadPos[0] += 1;
-    if (!isTailAdjacentToHead(movements, newHeadPos, newTailPos)) {
-      row += 1;
-      col = newHeadPos[1];
-    }
-  }
-  newTailPos[0] = row;
-  newTailPos[1] = col;
-
-  return { newTailPos, newHeadPos };
-}
-
-const drawGrid = (grid: string[][]) => {
-  for (const row of grid) {
-    console.log(row.join(' '));
-  }
 }
 
 const countMovements = (grid: string[][]) => {
@@ -169,30 +91,32 @@ const countMovements = (grid: string[][]) => {
 }
 
 const solvePartOne = async () => {
-  const gridSize = 30; // optimize?
+  const gridSize = 800; // optimize?
   const input = await getInput();
   const movements = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => '.'));
 
   const startRow = gridSize / 2;
   const startCol = gridSize / 2;
+  const startStack = Array.from({ length: 2 }, () => ([startRow, startCol]));
   movements[startRow][startCol] = 's';
-  drawMovements(movements, input, startRow, startCol);
+  drawMovements(movements, input, startStack);
 
   return countMovements(movements);
 };
 
 const solvePartTwo = async () => {
-  const gridSize = 30; // optimize?
+  const gridSize = 800; // optimize?
   const input = await getInput();
   const movements = Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => '.'));
 
   const startRow = gridSize / 2;
   const startCol = gridSize / 2;
+  const startStack = Array.from({ length: 10 }, () => ([startRow, startCol]));
   movements[startRow][startCol] = 's';
-  drawMovementsP2(movements, input, Array.from({ length: 10 }, () => ([startRow, startCol])));
 
-  const total = countMovements(movements);
-  return total
+  drawMovements(movements, input, startStack);
+
+  return countMovements(movements);
 };
 
 (async () => {
