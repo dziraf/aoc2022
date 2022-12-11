@@ -51,7 +51,7 @@ const getInput = async (): Promise<SolutionInput> => {
   });
 };
 
-const handleMonkeyTurn = (currentState: MonkeyInfo[], monkey: MonkeyInfo, divideBy: number) => {
+const handleMonkeyTurn = (currentState: MonkeyInfo[], monkey: MonkeyInfo, modulo: number, shouldDivide: boolean) => {
   const { items, operation, test } = monkey;
   const { operator, by } = operation;
   const { divisibleBy, ifTrue, ifFalse } = test;
@@ -71,12 +71,13 @@ const handleMonkeyTurn = (currentState: MonkeyInfo[], monkey: MonkeyInfo, divide
       }
     }
 
-    const divided = Math.floor(worryLevel / divideBy);
-    if (divided % divisibleBy === 0) {
-      currentState[ifTrue].items.push(divided);
+    if (shouldDivide) {
+      worryLevel = Math.floor(worryLevel / 3);
     } else {
-      currentState[ifFalse].items.push(divided);
+      worryLevel %= modulo;
     }
+
+    currentState[worryLevel % divisibleBy === 0 ? ifTrue : ifFalse].items.push(worryLevel);
 
     monkey.inspections += 1;
   }
@@ -84,40 +85,44 @@ const handleMonkeyTurn = (currentState: MonkeyInfo[], monkey: MonkeyInfo, divide
   monkey.items = [];
 };
 
-const handleRound = (currentState: MonkeyInfo[], divideBy: number) => {
+const handleRound = (currentState: MonkeyInfo[], modulo: number, shouldDivide: boolean) => {
   for (const monkey of currentState) {
-    handleMonkeyTurn(currentState, monkey, divideBy);
+    handleMonkeyTurn(currentState, monkey, modulo, shouldDivide);
   }
+};
+
+const getModulo = (state: MonkeyInfo[]) => state.reduce((memo, current) => memo * current.test.divisibleBy, 1);
+const getResult = (state: MonkeyInfo[]) => {
+  const inspectionsFromHighestToLowest = state.map(({ inspections }) => inspections).sort((a, b) => b - a);
+
+  return inspectionsFromHighestToLowest[0] * inspectionsFromHighestToLowest[1];
 };
 
 const solvePartOne = async () => {
   const state = await getInput();
   let rounds = 20;
   
+  const modulo = getModulo(state);
   for (let i = 0; i < rounds; i++) {
-    handleRound(state, 3);
+    handleRound(state, modulo, true);
   }
 
-  const inspectionsFromHighestToLowest = state.map(({ inspections }) => inspections).sort((a, b) => b - a);
-
-  return inspectionsFromHighestToLowest[0] * inspectionsFromHighestToLowest[1];
+  return getResult(state);
 };
 
 const solvePartTwo = async () => {
   const state = await getInput();
   let rounds = 10000;
   
+  const modulo = getModulo(state);
   for (let i = 0; i < rounds; i++) {
-    handleRound(state, 1);
+    handleRound(state, modulo, false);
   }
 
-  console.log(state);
-  const inspectionsFromHighestToLowest = state.map(({ inspections }) => inspections).sort((a, b) => b - a);
-
-  return inspectionsFromHighestToLowest[0] * inspectionsFromHighestToLowest[1];
+  return getResult(state);
 };
 
 (async () => {
   console.log(`1. ${await solvePartOne()}`);
-  console.log(`1. ${await solvePartTwo()}`);
+  console.log(`2. ${await solvePartTwo()}`);
 })();
