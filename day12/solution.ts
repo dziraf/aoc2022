@@ -29,6 +29,37 @@ class Solution {
     return result;
   }
 
+  public solvePartTwo() {
+    this.grid[this.startPosition[0]][this.startPosition[1]] = 'a';
+
+    const possibleStarts = this.grid.reduce((memo: number[][], current, row) => {
+      current.forEach((value, col) => {
+        if (value === 'a') {
+          memo.push([row, col, 0]);
+        }
+      });
+
+      return memo;
+    }, []);
+
+    const results: number[] = [];
+    possibleStarts.forEach((startingPoint) => {
+      this.reset(startingPoint);
+      results.push(this.climb([startingPoint]) ?? Number.MAX_VALUE);
+    });
+
+    results.sort((a, b) => a - b);
+
+    return results[0];
+  }
+
+  private reset (startPosition: number[]) {
+    this.grid[this.startPosition[0]][this.startPosition[1]] = 'a';
+    this.startPosition = startPosition;
+    this.distances = Array.from({ length: this.grid.length }, (_, i) => Array.from({ length: this.grid[i].length }, () => Number.MAX_VALUE));
+    this.distances[this.startPosition[0]][this.startPosition[1]] = 0;
+  }
+
   private climb = (toCheck: number[][]) => {
     while (toCheck.length > 0) {
       const [row, col, distance] = toCheck.shift()!;
@@ -110,5 +141,5 @@ class Solution {
   console.log(`1. ${s1.solvePartOne()}`);
 
   const s2 = new Solution([...input]);
-  console.log(`1. ${s2.solvePartOne()}`);
+  console.log(`2. ${s2.solvePartTwo()}`);
 })();
