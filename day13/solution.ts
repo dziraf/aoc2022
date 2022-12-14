@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import flatten from 'lodash/flatten';
 
 const getInput = async (): Promise<any[]> => {
   const input = await fs.readFile(path.join(__dirname, './input.txt'), 'utf8');
@@ -10,6 +11,22 @@ const getInput = async (): Promise<any[]> => {
 
     return pairs.map((s) => JSON.parse(s));
   });
+};
+
+const getInputP2 = async (): Promise<any[]> => {
+  const input = await fs.readFile(path.join(__dirname, './input.txt'), 'utf8');
+  const lines = input.split(/\n{2,}/g);
+
+  const flatPackets = flatten(lines.map((line) => {
+    const pairs = line.split('\n');
+
+    return pairs.map((s) => JSON.parse(s));
+  }));
+
+  flatPackets.push([[2]]);
+  flatPackets.push([[6]]);
+
+  return flatPackets;
 };
 
 export class Solution {
@@ -27,6 +44,22 @@ export class Solution {
     });
 
     return validIndices.reduce((memo, num) => memo + num, 0);
+  }
+
+  public async solvePartTwo() {
+    const input = await getInputP2();
+
+    input.sort((a, b) => {
+      const correctOrder = this.determineIfPairIsCorrect(a, b);
+
+      if (correctOrder) return -1;
+      else return 1;
+    });
+
+    const firstPacket = input.findIndex((v) => JSON.stringify(v) === '[[2]]') + 1;
+    const secondPacket = input.findIndex((v) => JSON.stringify(v) === '[[6]]') + 1;
+
+    return firstPacket * secondPacket;
   }
 
   public determineIfPairIsCorrect(left: any, right: any): boolean | undefined {
@@ -61,6 +94,8 @@ export class Solution {
 }
 
 (async () => {
-  const solution = new Solution();
-  console.log(`1. ${await solution.solvePartOne()}`);
+  const solution1 = new Solution();
+  console.log(`1. ${await solution1.solvePartOne()}`);
+  const solution2 = new Solution();
+  console.log(`2. ${await solution2.solvePartTwo()}`);
 })();
