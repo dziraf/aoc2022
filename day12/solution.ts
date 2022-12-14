@@ -60,7 +60,7 @@ class Solution {
     }
 
     const moves = (this.getAvailableMoves(position) as number[][])
-      .sort((a, b) => this.getDistance(a, this.endPosition) - this.getDistance(b, this.endPosition));
+      .sort(this.distanceComparator);
 
     for (const move of moves) {
       const [row, col] = move;
@@ -71,6 +71,13 @@ class Solution {
     }
 
     return false;
+  }
+
+  private distanceComparator = (a: number[], b: number[]) => {
+    const aDistance = this.getDistance(a, this.endPosition) - this.getDistance(a, this.startPosition);
+    const bDistance = this.getDistance(b, this.endPosition) - this.getDistance(b, this.startPosition);
+
+    return aDistance - bDistance;
   }
 
   private getDistance (pos1: number[], pos2: number[]) {
@@ -140,8 +147,9 @@ class Solution {
       if (move === null) return false;
   
       const [r, c] = move;
-      if (this.visited[r][c] === Solution.Visited) return false;
-  
+      if (this.visited[r][c] !== Solution.Open) return false;
+      if (r === this.startPosition[0] && c === this.startPosition[1]) return false;
+
       const sign = this.grid[r][c];
       const elevationAtMove = this.getElevation(sign);
   
