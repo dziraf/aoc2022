@@ -28,10 +28,10 @@ class Solution {
   private verticalModifier!: number;
 
   public async solvePartOne() {
-   const { startingX, startingY } = await this.prepareGrid();
+   const { startingX, startingY } = await this.prepareGrid(0, false);
 
     let count = 0;
-    while (this.drawSand([startingX + 1, startingY])) {
+    while (this.drawSand([startingX, startingY])) {
       count += 1;
     }
 
@@ -41,16 +41,16 @@ class Solution {
   }
 
   public async solvePartTwo() {
-    const { startingX, startingY, floor } = await this.prepareGrid(true);
+    const { startingX, startingY } = await this.prepareGrid(150, true);
 
     let count = 0;
-    while (this.drawSand([startingX + 1, startingY])) {
+    while (this.drawSand([startingX, startingY])) {
       count += 1;
     }
 
     this.displayGrid();
 
-    return count;
+    return count + 1; // add start
   }
 
   private displayGrid () {
@@ -65,7 +65,6 @@ class Solution {
 
     let nextMarker = null;
     do {
-      // console.log(currentHeight);
       let nextHeight = this.grid![currentHeight + 1];
       if (!nextHeight || y < 0) return false;
 
@@ -171,26 +170,31 @@ class Solution {
     }
   }
 
-  private async prepareGrid(addFloorLevel: boolean = false) {
+  private async prepareGrid(customSpacing: number = 20, addFloorLevel: boolean = false) {
     const input = await getInput();
 
     const {
+      minX,
       maxX,
       minY,
       maxY,
     } = this.getMinYmaxX(input);
-    this.verticalModifier = 0;
-    this.horizontalModifier = minY;
 
-    const startingY = 500 - minY;
+    const spacing = Math.min(500, customSpacing);
+    this.verticalModifier = 0;
+    this.horizontalModifier = minY - spacing;
+
+    const startingY = 500 - this.horizontalModifier;
     const startingX = 0;
 
-    this.grid = Array.from({ length: maxX + 1 }, () => Array.from({ length: maxY - minY + startingY + 1 }, () => Marker.Air));
+    const width = maxY - this.horizontalModifier + startingY + 1;
+    const height = maxX + 1;
+    this.grid = Array.from({ length: height }, () => Array.from({ length: width }, () => Marker.Air));
     this.grid[startingX][startingY] = Marker.Start;
 
     if (addFloorLevel) {
-      this.grid.push(Array.from({ length: maxY - minY + startingY + 1 }, () => Marker.Air));
-      this.grid.push(Array.from({ length: maxY - minY + startingY + 1 }, () => Marker.Rock));
+      this.grid.push(Array.from({ length: width }, () => Marker.Air));
+      this.grid.push(Array.from({ length: width }, () => Marker.Rock));
     }
 
     for (const coordinates of input) {
@@ -206,5 +210,5 @@ class Solution {
   console.log(`1. ${await s1.solvePartOne()}`);
 
   const s2 = new Solution();
-  console.log(`1. ${await s2.solvePartTwo()}`);
+  console.log(`2. ${await s2.solvePartTwo()}`);
 })();
