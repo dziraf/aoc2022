@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import intersection from 'lodash/intersection';
 
 const getInput = async () => {
   const input = await fs.readFile(path.join(__dirname, './input.txt'), 'utf8');
@@ -155,7 +154,7 @@ class Solution {
   const input = await getInput();
 
   const s1 = new Solution([...input]);
-  // console.log(`1. ${s1.solvePartOne()}`);
+  console.log(`1. ${s1.solvePartOne()}`);
 
   const s2 = new Solution([...input]);
   console.log(`2. ${s2.solvePartTwo()}`);
